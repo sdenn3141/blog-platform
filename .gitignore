@@ -8,4 +8,6 @@ tmp/
 main
 *templ.go
 .DS_Store
+.idea/
+*.iml
 

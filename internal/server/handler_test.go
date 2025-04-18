@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,18 +27,21 @@ func setupTest() (*echo.Echo, *mockDB, time.Time) {
 func TestHealthHandler(t *testing.T) {
 	e, mockDB, _ := setupTest()
 	mockDB.On("Health", mock.Anything).Return(nil)
-	server := &server.Server{
+	s := &server.Server{
 		DB: mockDB,
 	}
 	t.Run("Health Check runs properly", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/health", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		err := server.HealthHandler(c)
+		err := s.HealthHandler(c)
 		assert.NoError(t, err)
 
 		var res map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 		assert.Equal(t, "healthy", res["status"])
 	})
 }
@@ -48,7 +50,7 @@ func TestCreateBlogHandler(t *testing.T) {
 	e, mockDB, _ := setupTest()
 	createBlogId := "123"
 	mockDB.On("CreateBlog", mock.Anything, mock.Anything).Return(&createBlogId, nil)
-	server := &server.Server{
+	s := &server.Server{
 		DB: mockDB,
 	}
 	t.Run("Valid Blog Creation", func(t *testing.T) {
@@ -64,12 +66,15 @@ func TestCreateBlogHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err := server.CreateBlogHandler(c)
+		err := s.CreateBlogHandler(c)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		var res map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 		assert.Equal(t, "123", res["data"])
 	})
 
@@ -80,12 +85,15 @@ func TestCreateBlogHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err := server.CreateBlogHandler(c)
+		err := s.CreateBlogHandler(c)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var res map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 		assert.Equal(t, res["error"], "invalid request body")
 	})
 }
@@ -94,7 +102,7 @@ func TestGetBlogHandler(t *testing.T) {
 	e, mockDB, mockDate := setupTest()
 	mockGetResponse := database.Blog{Title: "Blog Title", Content: "My First Blog", Category: "Example", Tags: []string{"example"}, CreatedAt: mockDate, UpdatedAt: mockDate}
 	mockDB.On("GetBlog", mock.Anything, mock.Anything).Return(&mockGetResponse, nil)
-	server := &server.Server{
+	s := &server.Server{
 		DB: mockDB,
 	}
 
@@ -103,12 +111,15 @@ func TestGetBlogHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err := server.GetBlogHandler(c)
+		err := s.GetBlogHandler(c)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var res map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 		assert.Equal(t, "Blog Title", res["title"])
 	})
 }
@@ -125,7 +136,7 @@ func TestGetBlogsHandler(t *testing.T) {
 			{Title: "Blog Title 1", Content: "My First Blog", Category: "Example", Tags: []string{"example"}, CreatedAt: mockDate, UpdatedAt: mockDate},
 			{Title: "Blog Title 2", Content: "My Second Blog", Category: "Example", Tags: []string{"example"}, CreatedAt: mockDate, UpdatedAt: mockDate},
 		}, nil)
-	server := &server.Server{
+	s := &server.Server{
 		DB: mockDB,
 	}
 	t.Run("Gets all blogs", func(t *testing.T) {
@@ -133,13 +144,15 @@ func TestGetBlogsHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err := server.GetBlogsHandler(c)
+		err := s.GetBlogsHandler(c)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var res []map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
-		fmt.Println(res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 
 		assert.Equal(t, "Blog Title 3", res[0]["title"])
 		assert.Equal(t, "Blog Title 4", res[1]["title"])
@@ -150,13 +163,15 @@ func TestGetBlogsHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err := server.GetBlogsHandler(c)
+		err := s.GetBlogsHandler(c)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var res []map[string]string
-		json.NewDecoder(rec.Body).Decode(&res)
-		fmt.Println(res)
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatal("error decoding response")
+		}
 
 		assert.Equal(t, "Blog Title 1", res[0]["title"])
 		assert.Equal(t, "Blog Title 2", res[1]["title"])

@@ -5,6 +5,7 @@ import (
 	"blog-platform/test/helpers"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,16 +19,14 @@ import (
 
 func TestE2E_CreateBlog(t *testing.T) {
 	mongoContainer := helpers.SetupTestDatabase()
-	defer mongoContainer.Container.Terminate(context.Background())
 
 	fmt.Println("Created Database")
 	s := server.NewServer()
 	t.Log(s.Addr)
-	defer s.Shutdown(context.Background())
 	fmt.Println("Created Server")
 
 	go func() {
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("failed to start server: %v", err)
 		}
 	}()
@@ -35,10 +34,6 @@ func TestE2E_CreateBlog(t *testing.T) {
 	waitForServer := func() {
 		for i := 0; i < 10; i++ {
 			resp, err := http.Get("http://localhost:8000/health")
-			fmt.Println(err)
-			var x map[string]string
-			json.NewDecoder(resp.Body).Decode(&x)
-			fmt.Println(x)
 			if err == nil && resp.StatusCode == 200 {
 				return
 			}
@@ -55,6 +50,19 @@ func TestE2E_CreateBlog(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	var res map[string]string
-	json.NewDecoder(resp.Body).Decode(&res)
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		t.Fatal("error decoding response")
+	}
 	assert.NotEmpty(t, res["data"])
+
+	err = s.Shutdown(context.Background())
+	if err != nil {
+		log.Fatal("Error shutting down server")
+	}
+	err = mongoContainer.Container.Terminate(context.Background())
+	if err != nil {
+		log.Fatal("Error terminating mongo container. Should be cleaned up by Ryuk.")
+	}
+
 }

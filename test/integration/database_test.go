@@ -4,6 +4,7 @@ import (
 	"blog-platform/internal/database"
 	"blog-platform/internal/server"
 	"blog-platform/test/helpers"
+	"log"
 
 	"context"
 	"encoding/json"
@@ -37,7 +38,8 @@ func (suite *BlogRepositorySuite) SetupSuite() {
 }
 
 func (suite *BlogRepositorySuite) TearDownSuite() {
-	suite.testDatabase.Container.Terminate(context.Background())
+	err := suite.testDatabase.Container.Terminate(context.Background())
+	log.Fatal(err)
 }
 
 func TestSuite(t *testing.T) {
@@ -60,11 +62,11 @@ func (suite *BlogRepositorySuite) TestCreateBlog() {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		server := &server.Server{
+		s := &server.Server{
 			DB: suite.repository,
 		}
 
-		err := server.CreateBlogHandler(c)
+		err := s.CreateBlogHandler(c)
 		suite.NoError(err)
 		suite.Equal(http.StatusCreated, rec.Code)
 

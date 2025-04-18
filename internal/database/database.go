@@ -124,13 +124,13 @@ func (s *MongoBlogRepository) GetBlogs(ctx context.Context) ([]*Blog, error) {
 		return nil, errors.New("paging error")
 	}
 
-	cur.Close(ctx)
+	if err = cur.Close(ctx); err != nil {
+		return nil, errors.New("paging error")
+	}
 
 	if len(blogs) == 0 {
 		return nil, errors.New("no blogs found")
 	}
-
-	fmt.Println(blogs)
 
 	return blogs, nil
 }
@@ -243,7 +243,9 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 		return nil, errors.New("paging error")
 	}
 
-	cur.Close(ctx)
+	if err = cur.Close(ctx); err != nil {
+		return nil, errors.New("paging error")
+	}
 
 	if len(blogs) == 0 {
 		return nil, errors.New("no blogs")
