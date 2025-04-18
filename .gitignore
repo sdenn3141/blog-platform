@@ -1,0 +1,11 @@
+*.exe
+*.exe~
+*.test
+*.out
+tmp/
+.vscode
+.env
+main
+*templ.go
+.DS_Store
+
