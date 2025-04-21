@@ -14,3 +14,11 @@ type BlogCreateDto struct {
 	Content  string   `json:"content" validate:"required"`
 	Tags     []string `json:"tags" validate:"required"`
 }
+
+type BlogDeleteDto struct {
+	Id string `validate:"required"`
+}
+
+type BlogGetDto struct {
+	Id string `validate:"required"`
+}
