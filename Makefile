@@ -15,11 +15,11 @@ docker-down:
 
 test:
 	@echo "Testing..."
-	@go test ./... -v
+	@go test ./...
 
 itest:
 	@echo "Running integration tests..."
-	@go test ./test/integration -v
+	@go test -tags=integration ./...
 
 clean:
 	@echo "Cleaning..."
