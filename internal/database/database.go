@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -147,7 +146,7 @@ func (s *MongoBlogRepository) GetBlog(ctx context.Context, id string) (*Blog, er
 	var blog *Blog
 	err = s.collection.FindOne(ctx, filter).Decode(&blog)
 	if err != nil {
-		fmt.Printf("cannot find that id %v", err)
+		return nil, errors.New("no blogs found")
 	}
 
 	return blog, nil
@@ -217,7 +216,6 @@ func (s *MongoBlogRepository) UpdateBlog(ctx context.Context, update dto.BlogUpd
 }
 
 func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) ([]*Blog, error) {
-	var blogs []*Blog
 	filter := bson.M{
 		"$or": []bson.M{
 			{"title": bson.M{"$regex": term, "$options": "i"}},
@@ -227,9 +225,12 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 	}
 	cur, err := s.collection.Find(ctx, filter)
 	if err != nil {
-		log.Fatalf("db down: %v", err)
+		return nil, errors.New("no blogs found")
 	}
 
+	fmt.Println(term)
+
+	var blogs []*Blog
 	for cur.Next(ctx) {
 		var b Blog
 		err := cur.Decode(&b)
@@ -238,6 +239,8 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 		}
 		blogs = append(blogs, &b)
 	}
+
+	fmt.Println(blogs)
 
 	if err := cur.Err(); err != nil {
 		return nil, errors.New("paging error")
@@ -248,10 +251,8 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 	}
 
 	if len(blogs) == 0 {
-		return nil, errors.New("no blogs")
+		return nil, errors.New("no blogs found with that term")
 	}
-
-	fmt.Println(blogs)
 
 	return blogs, nil
 }
