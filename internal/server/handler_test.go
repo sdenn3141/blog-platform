@@ -37,7 +37,7 @@ func TestHealthHandler(t *testing.T) {
 		err := s.HealthHandler(c)
 		assert.NoError(t, err)
 
-		var res map[string]string
+		var res map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
 			t.Fatal("error decoding response")
@@ -70,10 +70,10 @@ func TestCreateBlogHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		var res map[string]string
+		var res map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
-			t.Fatal("error decoding response")
+			t.Fatalf("error decoding response: %s", err)
 		}
 		assert.Equal(t, "123", res["data"])
 	})
@@ -89,10 +89,10 @@ func TestCreateBlogHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var res map[string]string
+		var res map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
-			t.Fatal("error decoding response")
+			t.Fatalf("error decoding response: %s", err)
 		}
 		assert.Equal(t, res["error"], "invalid request body")
 	})
@@ -115,10 +115,10 @@ func TestGetBlogHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var res map[string]string
+		var res map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
-			t.Fatal("error decoding response")
+			t.Fatalf("error decoding response: %s", err)
 		}
 		assert.Equal(t, "Blog Title", res["title"])
 	})
@@ -148,10 +148,10 @@ func TestGetBlogsHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var res []map[string]string
+		var res []map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
-			t.Fatal("error decoding response")
+			t.Fatalf("error decoding response: %s", err)
 		}
 
 		assert.Equal(t, "Blog Title 3", res[0]["title"])
@@ -167,10 +167,10 @@ func TestGetBlogsHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var res []map[string]string
+		var res []map[string]interface{}
 		err = json.NewDecoder(rec.Body).Decode(&res)
 		if err != nil {
-			t.Fatal("error decoding response")
+			t.Fatalf("error decoding response: %s", err)
 		}
 
 		assert.Equal(t, "Blog Title 1", res[0]["title"])

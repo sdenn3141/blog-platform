@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -62,9 +61,8 @@ func New(settings Settings) (*MongoBlogRepository, error) {
 	uri := fmt.Sprintf("mongodb://%s:%s/", settings.HostName, settings.Port)
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetAuth(credential))
-
 	if err != nil {
-		return nil, errors.New("database failed to connect")
+		return nil, fmt.Errorf("database failed to connect - %w", err)
 	}
 
 	return &MongoBlogRepository{
@@ -76,7 +74,7 @@ func New(settings Settings) (*MongoBlogRepository, error) {
 func (s *MongoBlogRepository) Health(ctx context.Context) error {
 	err := s.client.Ping(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to ping db - %v", err)
+		return fmt.Errorf("failed to ping db - %w", err)
 	}
 
 	return nil
@@ -95,7 +93,7 @@ func (s *MongoBlogRepository) CreateBlog(ctx context.Context, create dto.BlogCre
 
 	result, err := s.collection.InsertOne(ctx, blog)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert blog entry - %v", err)
+		return nil, fmt.Errorf("failed to insert blog entry - %w", err)
 	}
 
 	stringObjectID := result.InsertedID.(primitive.ObjectID).Hex()
@@ -147,7 +145,7 @@ func (s *MongoBlogRepository) GetBlog(ctx context.Context, id string) (*Blog, er
 	var blog *Blog
 	err = s.collection.FindOne(ctx, filter).Decode(&blog)
 	if err != nil {
-		fmt.Printf("cannot find that id %v", err)
+		return nil, errors.New("no blogs found")
 	}
 
 	return blog, nil
@@ -155,9 +153,6 @@ func (s *MongoBlogRepository) GetBlog(ctx context.Context, id string) (*Blog, er
 
 func (s *MongoBlogRepository) DeleteBlog(ctx context.Context, id string) (*Blog, error) {
 	idFromHex, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	filter := bson.D{
 		primitive.E{Key: "_id", Value: idFromHex}}
@@ -165,7 +160,7 @@ func (s *MongoBlogRepository) DeleteBlog(ctx context.Context, id string) (*Blog,
 	var blog *Blog
 	err = s.collection.FindOneAndDelete(ctx, filter).Decode(&blog)
 	if err != nil {
-		fmt.Printf("cannot find that id %v", err)
+		return nil, fmt.Errorf("cannot find id %v", id)
 	}
 
 	return blog, nil
@@ -217,7 +212,6 @@ func (s *MongoBlogRepository) UpdateBlog(ctx context.Context, update dto.BlogUpd
 }
 
 func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) ([]*Blog, error) {
-	var blogs []*Blog
 	filter := bson.M{
 		"$or": []bson.M{
 			{"title": bson.M{"$regex": term, "$options": "i"}},
@@ -227,9 +221,9 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 	}
 	cur, err := s.collection.Find(ctx, filter)
 	if err != nil {
-		log.Fatalf("db down: %v", err)
+		return nil, errors.New("no blogs found")
 	}
-
+	var blogs []*Blog
 	for cur.Next(ctx) {
 		var b Blog
 		err := cur.Decode(&b)
@@ -248,10 +242,8 @@ func (s *MongoBlogRepository) GetBlogsByTerm(ctx context.Context, term string) (
 	}
 
 	if len(blogs) == 0 {
-		return nil, errors.New("no blogs")
+		return nil, errors.New("no blogs found with that term")
 	}
-
-	fmt.Println(blogs)
 
 	return blogs, nil
 }

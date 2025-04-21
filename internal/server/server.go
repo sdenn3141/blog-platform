@@ -26,7 +26,7 @@ func NewServer() *http.Server {
 		Port:       os.Getenv("DB_PORT"),
 		Username:   os.Getenv("DB_USERNAME"),
 		Password:   os.Getenv("DB_PASSWORD"),
-		DbName:     os.Getenv("DB_DATABASE"),
+		DbName:     os.Getenv("DB_NAME"),
 		AuthSource: os.Getenv("DB_AUTHSOURCE"),
 	}
 	db, err := database.New(dbSettings)

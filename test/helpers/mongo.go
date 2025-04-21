@@ -39,9 +39,9 @@ func (tdb *TestDatabase) TearDown() {
 
 func createMongoContainer(ctx context.Context) (testcontainers.Container, *database.MongoBlogRepository, string, error) {
 	env := map[string]string{
-		"MONGO_INITDB_ROOT_USERNAME": "root",
-		"MONGO_INITDB_ROOT_PASSWORD": "pass",
-		"MONGO_INITDB_DATABASE":      "blogs",
+		"MONGO_INITDB_ROOT_USERNAME": os.Getenv("DB_USERNAME"),
+		"MONGO_INITDB_ROOT_PASSWORD": os.Getenv("DB_PASSWORD"),
+		"MONGO_INITDB_DATABASE":      os.Getenv("DB_NAME"),
 	}
 	port := "27017:27017"
 

@@ -5,6 +5,7 @@ import (
 	"blog-platform/internal/dto"
 	"context"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"time"
 
@@ -27,7 +28,13 @@ func (s *Server) CreateBlogHandler(c echo.Context) error {
 	defer cancel()
 
 	blog := new(dto.BlogCreateDto)
+
 	if err := c.Bind(blog); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(blog); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
@@ -83,6 +90,11 @@ func (s *Server) UpdateBlogHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
+	validate := validator.New()
+	if err := validate.Struct(updateBlog); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+
 	data, err := s.DB.UpdateBlog(ctx, updateBlog)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "internal server error"})
@@ -96,7 +108,7 @@ func (s *Server) DeleteBlogHandler(c echo.Context) error {
 	id := c.Param("id")
 	data, err := s.DB.DeleteBlog(ctx, id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": fmt.Sprintf("internal server error - %v", err)})
 	}
 	return c.JSON(http.StatusOK, data)
 }
