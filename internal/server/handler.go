@@ -54,6 +54,7 @@ func (s *Server) GetBlogHandler(c echo.Context) error {
 
 	id := c.Param("id")
 	data, err := s.DB.GetBlog(ctx, id)
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "internal server error"})
 	}
@@ -106,6 +107,7 @@ func (s *Server) DeleteBlogHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 1*time.Second)
 	defer cancel()
 	id := c.Param("id")
+
 	data, err := s.DB.DeleteBlog(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": fmt.Sprintf("internal server error - %v", err)})

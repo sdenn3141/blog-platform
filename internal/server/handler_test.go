@@ -177,3 +177,57 @@ func TestGetBlogsHandler(t *testing.T) {
 		assert.Equal(t, "Blog Title 2", res[1]["title"])
 	})
 }
+
+func TestDeleteBlogHandler(t *testing.T) {
+	e, mockDB, mockDate := setupTest()
+	mockDeleteResponse := database.Blog{Title: "Blog Title", Content: "My First Blog", Category: "Example", Tags: []string{"example"}, CreatedAt: mockDate, UpdatedAt: mockDate}
+	mockDB.On("DeleteBlog", mock.Anything, mock.Anything).Return(&mockDeleteResponse, nil)
+	s := &server.Server{
+		DB: mockDB,
+	}
+
+	t.Run("Deletes blog", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/posts/1234", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		err := s.DeleteBlogHandler(c)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var res map[string]interface{}
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatalf("error decoding response: %s", err)
+		}
+		assert.Equal(t, "Blog Title", res["title"])
+	})
+}
+
+func TestUpdateBlogHandler(t *testing.T) {
+	e, mockDB, mockDate := setupTest()
+	mockPutResponse := database.Blog{Title: "Blog Title", Content: "My First Blog", Category: "Example", Tags: []string{"example"}, CreatedAt: mockDate, UpdatedAt: mockDate}
+	mockDB.On("UpdateBlog", mock.Anything, mock.Anything).Return(&mockPutResponse, nil)
+	s := &server.Server{
+		DB: mockDB,
+	}
+
+	t.Run("Updates blog", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPut, "/posts/:id", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues("1234")
+
+		err := s.UpdateBlogHandler(c)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var res map[string]interface{}
+		err = json.NewDecoder(rec.Body).Decode(&res)
+		if err != nil {
+			t.Fatalf("error decoding response: %s", err)
+		}
+		assert.Equal(t, "Blog Title", res["title"])
+	})
+}
